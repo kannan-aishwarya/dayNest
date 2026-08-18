@@ -1,5 +1,6 @@
 package com.example.planner
 
+import androidx.compose.material3.Icon
 import android.os.Build
 import android.widget.DatePicker
 import androidx.annotation.RequiresApi
@@ -16,9 +17,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
@@ -34,10 +41,16 @@ import androidx.navigation.NavController
 import com.example.planner.reusable.GradientBackground
 import com.example.planner.viewmodel.GoalViewModel
 import java.time.Instant
+import java.time.format.TextStyle
+import java.util.Locale
 import java.time.LocalDate
 import java.time.ZoneId
 import androidx.compose.runtime.getValue
-
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import java.time.DayOfWeek
+import androidx.compose.runtime.*
+import androidx.compose.ui.text.style.TextAlign
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -50,10 +63,16 @@ fun CalendarScreen(
 
     val today = LocalDate.now()
 
-    // Start of current week (Sunday)
-    val startOfWeek = today.minusDays(today.dayOfWeek.value % 7L)
+    var currentWeek by remember {
+        mutableStateOf(LocalDate.now().with(DayOfWeek.SUNDAY ))
+    }
 
-    val weekDates = (0..6).map { startOfWeek.plusDays(it.toLong()) }
+    val weekDates = (0..6).map {
+        currentWeek.plusDays(it.toLong())
+    }
+
+    val monthName = currentWeek.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
+    val year = currentWeek.year
 
     GradientBackground {
 
@@ -71,12 +90,29 @@ fun CalendarScreen(
             )
 
             Spacer(modifier = Modifier.height(30.dp))
+            Text (
+                text = "$monthName $year",
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color(0xFF4A2C2A),
+                modifier = Modifier.fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                textAlign = TextAlign.Center
+            )
+
 
             // 🔹 Days Row
             Row (
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+
+                IconButton(onClick = {
+                    currentWeek = currentWeek.minusWeeks(1)
+                }) {
+                    Icon(imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Previous Week")
+                }
+                Spacer(modifier = Modifier.width(6.dp))
 
                 weekDates.forEach { date ->
 
@@ -91,7 +127,8 @@ fun CalendarScreen(
                             .clickable {
                                 navController.navigate("weeklyform/$dateString")
                             }
-                    ) {
+                    )
+                    {
 
                         Text(
                             text = date.dayOfWeek.name.take(3),
@@ -123,6 +160,13 @@ fun CalendarScreen(
                             )
                         }
                     }
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                IconButton(onClick = {
+                    currentWeek = currentWeek.plusWeeks(1)
+                }) {
+                    Icon(imageVector = Icons.Default.ArrowForward,
+                        contentDescription = "Next Week")
                 }
             }
         }
